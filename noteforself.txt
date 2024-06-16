@@ -1,0 +1,20 @@
+To save:
+ver3 - latest
+ver1 - ver1 # ensemble
+  model_choices = 4, 5, 6, 7
+ver4 - test1 # ensemble
+  model_choices = 4, 5, 6, 7 (differnt learning rates)
+  # Result (Ensemble):
+  # [train-100/100] loss: 0.320171 | acc: 90.411%
+  # [val-100/100] loss: 0.974297 | acc: 76.400%
+ver7 - test1 
+  # Result (Single Model):
+  # [train-50/50] loss: 2.018832 | acc: 39.733%
+  # [val-50/50] loss: 1.881399 | acc: 43.000%
+ver8 - test1
+ver9 - test1 # ensemble
+  model_choices = 4, 7, 7, 8
+  learning_rates = 1e-3, 1e-3, 5e-4, 1e-3
+ver13 - test1
+  [train-500/500] loss: 0.237659 | acc: 93.322%
+  [val-500/500] loss: 0.692909 | acc: 82.000%

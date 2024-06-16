@@ -1,0 +1,12 @@
+/.DS_Store
+
+/code/outputs/*
+
+/code/__pycache__/*
+
+training.ipynb
+
+datasets.zip
+code/datasets/images/*
+code/.DS_Store
+code/datasets/.DS_Store
