@@ -53,6 +53,10 @@ def custom_collate_fn(batch):
     return images, labels
 
 
+def stack_crops(crops):
+    return torch.stack([T.ToTensor()(crop) for crop in crops])
+
+
 def run_val_epoch(net, data_loader):
     net.eval()
     sum_loss = 0
@@ -70,7 +74,7 @@ def run_val_epoch(net, data_loader):
                 )  # reshape to [batch_size * num_crops, C, H, W]
                 gt_y = gt_y.repeat(num_crops)
                 out = net(img)
-                out = out.view(batch_size, num_crops, -1).sum(1)  # sum over crops
+                out = out.view(batch_size, num_crops, -1).mean(1)  # average over crops
             else:
                 batch_size = img.size(0)
                 out = net(img)
@@ -86,10 +90,6 @@ def run_val_epoch(net, data_loader):
     acc = 100 * correct / num_samples
 
     return loss, acc
-
-
-def stack_crops(crops):
-    return torch.stack([T.ToTensor()(crop) for crop in crops])
 
 
 def run_trainval():
@@ -116,7 +116,9 @@ def run_trainval():
                 )  # reshape to [batch_size * num_crops, C, H, W]
                 gt_y = gt_y.repeat(num_crops)
                 pred_y = net(img)
-                pred_y = pred_y.view(batch_size, num_crops, -1).sum(1)  # sum over crops
+                pred_y = pred_y.view(batch_size, num_crops, -1).mean(
+                    1
+                )  # average over crops
             else:
                 batch_size = img.size(0)
                 pred_y = net(img)
@@ -156,8 +158,9 @@ def run_trainval():
         writer.add_scalar("ep_acc/val", val_acc, ep + 1)
 
         # Implement early stopping if needed
-        if val_acc >= 90:
+        if val_acc >= 94:
             print(f"Early stopping at epoch {ep + 1}")
+            torch.save(net.state_dict(), osp.join(ckpt_dir, f"ep{ep+1}.pt"))
             break
 
 
@@ -203,11 +206,10 @@ if __name__ == "__main__":
         "ver15": R34_ver15,
     }
 
-    ## split train/val datasets randomly - you can modify this randomness
+    # Split train/val datasets randomly - you can modify this randomness
     train_annos, val_annos = split_trainval(num_train=45, num_val=10)
 
-    ## data transform
-    ## For inference, you may use 5-crop (4 corners and center) - T.FiveCrop(img_size)
+    # Data transform
     img_size = 256
     crop_size = 224
     max_rotation = 50
@@ -216,7 +218,7 @@ if __name__ == "__main__":
             T.Resize(img_size),
             T.RandomHorizontalFlip(),
             T.RandomRotation(max_rotation),
-            T.RandomResizedCrop(crop_size, scale=(0.6, 1.2)),
+            T.RandomResizedCrop(crop_size, scale=(0.7, 1.2)),
             T.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.3, hue=0.2),
             T.ToTensor(),
             T.RandomErasing(),
@@ -225,13 +227,12 @@ if __name__ == "__main__":
     val_transform = T.Compose(
         [
             T.Resize(img_size),
-            T.CenterCrop(crop_size),
-            # T.Lambda(stack_crops),
-            T.ToTensor(),
+            T.FiveCrop(crop_size),
+            T.Lambda(stack_crops),
         ]
     )
 
-    ## build dataloader
+    # Build dataloader
     train_dataset = Proj3_Dataset(
         train_annos, "train", train_transform, num_augmentations=1
     )
@@ -256,15 +257,15 @@ if __name__ == "__main__":
         collate_fn=custom_collate_fn,
     )
 
-    ## build model
+    # Build model
     net = model_choices[arch_ver](num_cls=num_cls, freeze_backbone=freeze_backbone).to(
         device
     )
 
-    ## train & validation
+    # Train & validation
     img_mean = torch.tensor([0.485, 0.456, 0.406]).reshape(1, 3, 1, 1).to(device)
     img_std = torch.tensor([0.229, 0.224, 0.225]).reshape(1, 3, 1, 1).to(device)
-    criterion = nn.CrossEntropyLoss()  ## loss function - you can define others
+    criterion = nn.CrossEntropyLoss()  # Loss function - you can define others
     train_parameters = filter(lambda p: p.requires_grad, net.parameters())
     optim = optim_choices[optim_type](
         train_parameters, lr=lr, weight_decay=weight_decay

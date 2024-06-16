@@ -595,7 +595,7 @@ class R34_ver15(nn.Module):
             nn.ELU(inplace=True),
             nn.Dropout(0.3),
             nn.Linear(1024, 512),
-            nn.BatchNorm1d(1024),
+            nn.BatchNorm1d(512),
             nn.ELU(inplace=True),
             nn.Dropout(0.3),
             nn.Linear(512, num_cls),
