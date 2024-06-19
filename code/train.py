@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import DataLoader
 import torchvision.transforms as T
 from torch.utils.tensorboard import SummaryWriter
-from torch.optim.lr_scheduler import StepLR, ReduceLROnPlateau
+from torch.optim.lr_scheduler import StepLR
 
 from datasets import Proj3_Dataset
 from models import *
@@ -83,8 +83,10 @@ def run_val_epoch(net, data_loader):
             correct += pred.eq(gt_y[:batch_size].data).sum().item()
 
             loss = criterion(out, gt_y[:batch_size])
-            sum_loss += gt_y.size(0) * loss.item()
-            num_samples += gt_y.size(0)
+            sum_loss += (
+                batch_size * loss.item()
+            )  # Use batch_size instead of gt_y.size(0)
+            num_samples += batch_size  # Increment by batch_size, not gt_y.size(0)
 
     loss = sum_loss / num_samples
     acc = 100 * correct / num_samples
@@ -168,7 +170,7 @@ if __name__ == "__main__":
     args = get_args_parser()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    num_epochs = 200
+    num_epochs = 20
     save_intv = 5
     lr = float(args.lr)
     weight_decay = 1e-4

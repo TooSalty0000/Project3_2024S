@@ -54,6 +54,7 @@ if __name__ == '__main__':
     '''
     python submission.py --arch_ver {arch_ver} --ckpt_path outputs/{path_to_your_model}/ckpt/ep30.pt --num_crop {1/3/5/10} 
     python3 submission.py --arch_ver ver14 --ckpt_path outputs/archver14_lr5e-05_freezeF_optimadam_Vtest1/ckpt/ep10.pt --num_crop 1
+    python3 submission.py --arch_ver ver15 --ckpt_path outputs/archver15_lr5e-05_freezeF_optimadam_Vtest2/ckpt/ep20.pt --num_crop 5
     '''
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--arch_ver', default='ver1')
@@ -82,6 +83,7 @@ if __name__ == '__main__':
         'ver12': R34_ver12,
         'ver13': R34_ver13,
         'ver14': R34_ver14,
+        'ver15': R34_ver15,
     }
     crop_choices = {1: T.CenterCrop, 5: T.FiveCrop, 10: T.TenCrop}
     img_size = 256
@@ -111,6 +113,6 @@ if __name__ == '__main__':
     output_cls = run_eval(net, test_subm_loader)
 
     ## save as csv file
-    SID = 20369608
+    SID = 3
     test_subm['cls'] = output_cls
     test_subm.to_csv(f'datasets/{SID}_test_subm.csv', index=False)
